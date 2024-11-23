@@ -7,7 +7,6 @@ scikit-learn
 nltk
 gensim
 StandardScaler
-WordNetLemmatizer
 stopwords
 word_tokenize
 re
