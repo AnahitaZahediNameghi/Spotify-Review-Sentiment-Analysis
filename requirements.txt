@@ -3,7 +3,7 @@ streamlit
 joblib
 numpy
 pandas
-sklearn
+scikit-learn
 nltk
 gensim
 StandardScaler
