@@ -1,12 +1,12 @@
 
 streamlit
-joblib
-numpy
-pandas
-scikit-learn
-nltk
-gensim
+joblib == 1.4.2
+numpy == 1.26.4
+pandas == 2.2.2
+scikit-learn == 1.5.2
+nltk == 3.9.1
+gensim == 4.3.3
 StandardScaler
 stopwords
-re
+re == 2.2.1
 os
