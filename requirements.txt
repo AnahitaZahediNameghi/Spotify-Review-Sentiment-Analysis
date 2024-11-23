@@ -1,0 +1,14 @@
+
+streamlit
+joblib
+numpy
+pandas
+sklearn
+nltk
+gensim
+StandardScaler
+WordNetLemmatizer
+stopwords
+word_tokenize
+re
+os
