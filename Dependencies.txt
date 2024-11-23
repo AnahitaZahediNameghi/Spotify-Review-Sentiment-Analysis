@@ -1,8 +1,13 @@
-
 streamlit
 joblib
 numpy
 pandas
-scikit-learn
+sklearn
 nltk
 gensim
+StandardScaler
+WordNetLemmatizer
+stopwords
+word_tokenize
+re
+os
