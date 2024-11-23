@@ -7,40 +7,51 @@ Original file is located at
     https://colab.research.google.com/drive/19qfa402xLUhgKkm6V1B3jMJbMZCsCCuz
 """
 
-
+import os
 import re
 import nltk
 import gensim
 import joblib
 import numpy as np
+import pandas as pd 
 import streamlit as st
+import sklearn
 from nltk.tokenize import word_tokenize
-from gensim.models import Word2Vec
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.preprocessing import StandardScaler
+from tqdm import tqdm  # For progress bar 
 
-# Download necessary NLTK resources
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
-
-# Initialize objects
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-# Load pre-trained Word2Vec model
-word2vec_model = joblib.load('word2vec_model.joblib')
 
-# Load pre-trained XGBoost model
-model = joblib.load('best_model.joblib')
 
-# Load LabelEncoder
-encoder = joblib.load('label_encoder.joblib')
-class_names = encoder.classes_
+# Define paths to model files (make sure these are correct for your setup!)
+MODEL_DIR = "Streamlit"  # Create a directory named 'models' to store your files 
+WORD2VEC_MODEL_PATH = os.path.join(MODEL_DIR, "word2vec_model.joblib")
+XGB_MODEL_PATH = os.path.join(MODEL_DIR, "best_model.joblib")
+ENCODER_PATH = os.path.join(MODEL_DIR, "label_encoder.joblib")
+SCALER_PATH = os.path.join(MODEL_DIR, "scaler.joblib") 
 
-# Load pre-fitted StandardScaler
-scaler = joblib.load('scaler.joblib')
+
+
+# Load pre-trained models and scaler
+try:
+    word2vec_model = joblib.load(WORD2VEC_MODEL_PATH)
+    model = joblib.load(XGB_MODEL_PATH)
+    encoder = joblib.load(ENCODER_PATH)
+    scaler = joblib.load(SCALER_PATH)
+    class_names = encoder.classes_
+    vector_size = word2vec_model.vector_size 
+except FileNotFoundError:
+    st.error("Error: Model files not found. Please make sure the 'models' directory exists and contains the necessary files.")
+    st.stop()
+
+
 
 # Function to clean text
 def clean_text(text):
@@ -56,41 +67,35 @@ def clean_text(text):
     cleaned_tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
     return " ".join(cleaned_tokens)      # Return cleaned text as a string
 
-# Function to compute average Word2Vec embeddings for a text
+
+
 def get_avg_word2vec(tokens, model, vector_size):
     valid_tokens = [token for token in tokens if token in model.wv.key_to_index]
     if not valid_tokens:
-        return np.zeros(vector_size)
+        return np.zeros(vector_size) # Return zero vector if no tokens are found.  Consider a better default.
     return np.mean([model.wv[token] for token in valid_tokens], axis = 0)
 
-# Streamlit UI components
+
+
+# Streamlit UI
 st.title('Binary Review Classification')
-st.write('Enter a review, and the model will classify it into its corresponding label.')
+st.write('Enter a review, and the model will classify it.')
 
 review_text = st.text_area('Enter the review here:')
 
-# When the user submits a review
+
+
 if review_text:
-    # Clean the text
-    cleaned_review = clean_text(review_text)
-    st.write(f"**Cleaned Review:** {cleaned_review}")
+    with st.spinner('Processing...'): # Progress indicator
+        cleaned_review = clean_text(review_text)
+        st.write(f"**Cleaned Review:** {cleaned_review}")
+        tokens = cleaned_review.split()
+        review_embedding = get_avg_word2vec(tokens, word2vec_model, vector_size)
+        review_embedding_scaled = scaler.transform([review_embedding])
+        prediction = model.predict(review_embedding_scaled)
+        predicted_label = encoder.inverse_transform(prediction)[0]
 
-    # Tokenize the cleaned review
-    tokens = cleaned_review.split()
-
-    # Convert the review to its Word2Vec embedding
-    review_embedding = get_avg_word2vec(tokens, word2vec_model, 100)
-
-    # Rescale the embedding (use the pre-fitted scaler)
-    review_embedding_scaled = scaler.transform([review_embedding])
-
-    # Predict using the pre-trained XGBoost model
-    prediction = model.predict(review_embedding_scaled)
-    predicted_label = encoder.inverse_transform(prediction)[0]
-
-    # Display the prediction result
     st.write(f"The predicted label is: **{predicted_label}**")
 
-    # Optional: Display class mapping for reference
     st.write("Class Mapping:")
-    st.write({i: label for i, label in enumerate(class_names)})
+    st.table({i: label for i, label in enumerate(class_names)}) 
