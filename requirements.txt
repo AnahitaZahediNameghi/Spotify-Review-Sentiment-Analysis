@@ -5,5 +5,5 @@ numpy
 pandas 
 scikit-learn 
 nltk 
-gensim 
+gensim==4.3.3 
 scipy
