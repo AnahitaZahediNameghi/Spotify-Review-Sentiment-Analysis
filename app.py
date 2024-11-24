@@ -2,6 +2,7 @@
 import os
 import re
 import nltk
+nltk.download('punkt')
 import gensim
 import joblib
 import numpy as np
