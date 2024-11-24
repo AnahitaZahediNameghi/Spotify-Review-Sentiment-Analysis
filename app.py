@@ -68,8 +68,10 @@ def get_avg_word2vec(tokens, model, vector_size):
 
 
 # Streamlit UI
-st.title('Binary Review Classification')
+st.title('Spotify Review Sentiment Analysis')
 st.write('Enter a review, and the model will classify it.')
+
+
 
 review_text = st.text_area('Enter the review here:')
 
