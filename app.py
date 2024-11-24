@@ -1,4 +1,3 @@
-      
 import os
 import re
 import nltk
@@ -13,15 +12,13 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.preprocessing import StandardScaler
-from tqdm import tqdm  # For progress bar 
+from tqdm import tqdm  # For progress bar
 
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
-
-
 
 # Define paths to model files (assuming they're in the same directory as app.py)
 WORD2VEC_MODEL_PATH = "word2vec_model.joblib"
@@ -41,8 +38,6 @@ except FileNotFoundError as e:
     st.error(f"Error: {e}")
     st.stop()
 
-
-
 # Function to clean text
 def clean_text(text):
     if not isinstance(text, str):
@@ -57,37 +52,44 @@ def clean_text(text):
     cleaned_tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
     return " ".join(cleaned_tokens)      # Return cleaned text as a string
 
-
-
+# Function to get average Word2Vec embedding
 def get_avg_word2vec(tokens, model, vector_size):
     valid_tokens = [token for token in tokens if token in model.wv.key_to_index]
     if not valid_tokens:
-        return np.zeros(vector_size) # Return zero vector if no tokens are found.  Consider a better default.
+        return np.zeros(vector_size) # Return zero vector if no tokens are found.
     return np.mean([model.wv[token] for token in valid_tokens], axis = 0)
-
-
 
 # Streamlit UI
 st.title('Spotify Review Sentiment Analysis')
 st.write('Enter a review, and the model will classify it.')
 
-
-
+# User input
 review_text = st.text_area('Enter the review here:')
 
-
-
+# Predicting the sentiment
 if review_text:
-    with st.spinner('Processing...'): # Progress indicator
+    with st.spinner('Processing...'):  # Show progress indicator while processing
+        # Clean the review text
         cleaned_review = clean_text(review_text)
         st.write(f"**Cleaned Review:** {cleaned_review}")
+
+        # Tokenize and get Word2Vec embedding
         tokens = cleaned_review.split()
         review_embedding = get_avg_word2vec(tokens, word2vec_model, vector_size)
+
+        # Scale the embedding
         review_embedding_scaled = scaler.transform([review_embedding])
+
+        # Predict sentiment
         prediction = model.predict(review_embedding_scaled)
         predicted_label = encoder.inverse_transform(prediction)[0]
 
-    st.write(f"The predicted label is: **{predicted_label}**")
+        # Map the label to sentiment (Positive/Negative)
+        sentiment = "Positive" if predicted_label == 1 else "Negative"
 
-    st.write("Class Mapping:")
-    st.table({i: label for i, label in enumerate(class_names)}) 
+        # Display results
+        st.write(f"The predicted label is: **{predicted_label}** ({sentiment})")
+
+        # Display Class Mapping
+        st.write("### Class Mapping:")
+        st.table({i: label for i, label in enumerate(class_names)})
