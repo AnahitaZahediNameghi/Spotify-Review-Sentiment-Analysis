@@ -2,7 +2,7 @@
 import os
 import re
 import nltk
-nltk.download('punkt')
+nltk.download('punkt_tab')
 import gensim
 import joblib
 import numpy as np
